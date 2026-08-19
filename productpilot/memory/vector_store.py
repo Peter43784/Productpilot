@@ -1,0 +1,197 @@
+"""Semantic org memory.
+
+Primary backend is Chroma (persistent, in-process). If Chroma is unavailable on the
+platform (e.g. very new Python versions), we transparently fall back to a numpy-based
+index with the same interface — the "0 infrastructure" story stays intact.
+
+Embeddings: OpenAI text-embedding-3-small when OPENAI_API_KEY is set, otherwise a
+deterministic hash embedding (offline mode).
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+
+import numpy as np
+
+from .. import config
+
+EMBED_DIM = 256
+
+
+def _hash_embed(text: str) -> list[float]:
+    vec = np.zeros(EMBED_DIM, dtype=np.float64)
+    for token in text.lower().split():
+        h = int(hashlib.md5(token.encode("utf-8")).hexdigest()[:8], 16)
+        vec[h % EMBED_DIM] += 1.0
+    norm = np.linalg.norm(vec)
+    if norm:
+        vec /= norm
+    return vec.tolist()
+
+
+def _openai_embed(texts: list[str]) -> list[list[float]]:
+    from openai import OpenAI
+
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    resp = client.embeddings.create(model=config.EMBEDDING_MODEL, input=texts)
+    return [d.embedding for d in resp.data]
+
+
+def embed(texts: list[str]) -> list[list[float]]:
+    if os.getenv("OPENAI_API_KEY") and not config.MOCK:
+        try:
+            return _openai_embed(texts)
+        except Exception:
+            pass
+    return [_hash_embed(t) for t in texts]
+
+
+class MemoryDoc:
+    def __init__(
+        self,
+        text: str,
+        doc_type: str,
+        title: str,
+        source: str = "",
+        meta: dict | None = None,
+        embedding: list[float] | None = None,
+    ):
+        self.text = text
+        self.doc_type = doc_type  # prd | synthesis | research
+        self.title = title
+        self.source = source
+        self.meta = meta or {}
+        self.embedding = embedding if embedding is not None else embed([text])[0]
+
+    def to_dict(self) -> dict:
+        return {
+            "text": self.text, "doc_type": self.doc_type, "title": self.title,
+            "source": self.source, "meta": self.meta, "embedding": self.embedding,
+        }
+
+
+class VectorStore:
+    """Semantic memory over past PRDs, syntheses, and research."""
+
+    def __init__(self, backend: str | None = None):
+        self._docs: list[MemoryDoc] = []
+        if backend is None:
+            backend = "chroma" if _chroma_available() else "numpy"
+        self.backend = backend
+        if backend == "chroma":
+            self._collection = _init_chroma()
+        else:
+            self._collection = None
+        self._load_local()
+
+    # -- public API -----------------------------------------------------------
+
+    def index(self, text: str, doc_type: str, title: str, source: str = "", meta: dict | None = None) -> None:
+        doc = MemoryDoc(text, doc_type, title, source, meta)
+        self._docs.append(doc)
+        if self.backend == "chroma" and self._collection is not None:
+            try:
+                self._collection.add(
+                    ids=[f"{doc_type}-{len(self._docs)}"],
+                    embeddings=[doc.embedding],
+                    documents=[doc.text],
+                    metadatas=[{"doc_type": doc_type, "title": title, "source": source}],
+                )
+            except Exception:
+                pass
+        _persist_doc(doc)
+
+    def search(self, query: str, k: int = 5, doc_type: str | None = None) -> list[dict]:
+        if self.backend == "chroma" and self._collection is not None:
+            try:
+                results = self._collection.query(
+                    query_embeddings=[embed([query])[0]],
+                    n_results=k,
+                    where={"doc_type": doc_type} if doc_type else None,
+                )
+                return [
+                    {
+                        "text": d, "title": m.get("title", ""), "doc_type": m.get("doc_type", ""),
+                        "source": m.get("source", ""), "score": s,
+                    }
+                    for d, m, s in zip(
+                        results.get("documents", [[]])[0],
+                        results.get("metadatas", [[]])[0],
+                        results.get("distances", [[]])[0],
+                    )
+                ]
+            except Exception:
+                pass
+        qv = np.array(embed([query])[0])
+        scored = []
+        for doc in self._docs:
+            if doc_type and doc.doc_type != doc_type:
+                continue
+            dv = np.array(doc.embedding)
+            score = float(np.dot(qv, dv) / max(np.linalg.norm(qv) * np.linalg.norm(dv), 1e-9))
+            scored.append((score, doc))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [
+            {"text": d.text, "title": d.title, "doc_type": d.doc_type, "source": d.source, "score": round(s, 4)}
+            for s, d in scored[:k]
+        ]
+
+    def count(self) -> int:
+        return len(self._docs)
+
+    # -- persistence ------------------------------------------------------------
+
+    def _load_local(self) -> None:
+        blob = _local_blob_path()
+        if blob.exists():
+            try:
+                for rec in json.loads(blob.read_text(encoding="utf-8")):
+                    self._docs.append(
+                        MemoryDoc(
+                            rec["text"], rec["doc_type"], rec["title"],
+                            rec.get("source", ""), rec.get("meta", {}),
+                            embedding=rec.get("embedding"),
+                        )
+                    )
+            except Exception:
+                self._docs = []
+
+
+def _local_blob_path() -> Path:
+    return config.DB_DIR / "memory_blob.json"
+
+
+def _persist_doc(doc: MemoryDoc) -> None:
+    blob = _local_blob_path()
+    records = []
+    if blob.exists():
+        try:
+            records = json.loads(blob.read_text(encoding="utf-8"))
+        except Exception:
+            records = []
+    records.append(doc.to_dict())
+    blob.write_text(json.dumps(records, ensure_ascii=False), encoding="utf-8")
+
+
+def _chroma_available() -> bool:
+    try:
+        import chromadb  # noqa: F401
+
+        return True
+    except Exception:
+        return False
+
+
+def _init_chroma():
+    try:
+        import chromadb
+
+        client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))
+        return client.get_or_create_collection(
+            "productpilot_memory", metadata={"hnsw:space": "cosine"}
+        )
+    except Exception:
+        return None

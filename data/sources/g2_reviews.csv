@@ -1,0 +1,15 @@
+id,title,rating,review,date
+G-01,Great once you get past setup,4,"Onboarding is painful but once your team is active the analytics are excellent. The trial activation email helped us." ,2026-01-03
+G-02,Complex for small teams,3,"The setup wizard is overwhelming for a 5-person team. We almost gave up in the first run." ,2026-01-05
+G-03,Love the reports,5,"Reports are fast and the export to CSV works. We cancelled our old BI tool." ,2026-01-06
+G-04,Digest emails ignored,2,"Weekly digest is generic. I never read it. Mobile app would be better for alerts." ,2026-01-07
+G-05,Slack integration please,4,"We asked for Slack alerts twice. Our ops team lives in Slack, not in your app." ,2026-01-08
+G-06,Pricey for what we use,3,"We pay for seats we do not use. Pricing tiers are confusing after the trial." ,2026-01-09
+G-07,Second month dip,3,"Value is clear in month 1, unclear in month 2. We considered cancelling." ,2026-01-10
+G-08,Push notifications would help,4,"We miss important report thresholds. Push notifications on mobile would prevent fires." ,2026-01-11
+G-09,Support is fast,5,"Support answered our GDPR questions quickly once we asked. Product docs lack it." ,2026-01-12
+G-10,Too many clicks to share,3,"Sharing reports with the board takes 6 clicks and requires an admin. Annoying." ,2026-01-13
+G-11,Setup took a day,2,"The onboarding wizard took a full day with our finance team. Too complex." ,2026-01-14
+G-12,Solid analytics,5,"Best-in-class reporting once activated. The funnel reports are our weekly ritual." ,2026-01-15
+G-13,Would love SSO,4,"SSO would remove our biggest blocker for rolling out company-wide." ,2026-01-16
+G-14,Deprecate old export already,3,"The legacy CSV export is broken and support keeps blaming us. Migrate us properly." ,2026-01-17

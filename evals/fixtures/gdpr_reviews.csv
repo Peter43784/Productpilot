@@ -1,0 +1,4 @@
+id,title,rating,review
+G-1,EU privacy unclear,3,As an EU customer I need GDPR compliance: clear data retention policy and erasure. Our legal team blocks procurement otherwise.
+G-2,Retention policy missing,2,Where is my data stored and for how long? We need retention and PII handling documented for the DPA.
+G-3,Great otherwise,4,Product is good but privacy documentation must be explicit for EU expansion.

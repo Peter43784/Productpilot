@@ -1,0 +1,25 @@
+id,subject,description,status,created_at
+T-1001,Can't finish onboarding flow,New trial users keep getting stuck at the workspace setup step. They never reach the dashboard.,open,2026-01-04
+T-1002,Activation email never arrives,Signup confirmation works but the activation email is delayed by hours. People forget the product exists.,open,2026-01-05
+T-1003,Month 2 churn spike,Several customers cancel in their second month. They say the value is unclear after the first month.,open,2026-01-06
+T-1004,Setup wizard too complex,The onboarding wizard asks for 9 fields. Sales team reports prospects abandoning mid-setup.,open,2026-01-07
+T-1005,No way to invite teammates during onboarding,Users want to add their team while setting up but the invite step is buried after billing.,open,2026-01-08
+T-1006,First run is confusing,Logged-in users describe the first screen as overwhelming. No guided tour for analytics views.,open,2026-01-09
+T-1007,Export blocked without a template,Users cannot export reports until they create a template. Unclear error message.,open,2026-01-10
+T-1008,Trial activation at 12%,Only 12% of trials reach the active state. Growth team wants a fix before the Q2 push.,open,2026-01-11
+T-1009,Push notifications not supported on iOS,Marketing wants push alerts for new reports but iOS support is missing.,open,2026-01-12
+T-1010,Digest email goes to spam,Weekly digest lands in spam for 20% of users. Engagement with digests is low.,open,2026-01-13
+T-1011,Billing page confusing,Upgrade path requires contacting sales. Mid-market customers expect self-serve.,open,2026-01-14
+T-1012,Slack integration missing,Ops teams ask for report alerts in Slack. We have none.,open,2026-01-15
+T-1013,Slow dashboard loading,Analytics dashboard takes 8+ seconds with 10k rows. Users open it once and leave.,open,2026-01-16
+T-1014,Error on report generation,Report generation crashes for large date ranges. Stack trace points to aggregation service.,open,2026-01-17
+T-1015,GDPR data retention unclear,EU customers ask how long their data is stored. We cannot answer.,open,2026-01-18
+T-1016,SSO setup takes days,Enterprise prospects stall at SSO configuration. Sales loses deals in evaluation.,open,2026-01-19
+T-1017,Deprecation of legacy CSV export,Legacy CSV export is broken since the API v2 migration. Customers rely on it for finance.,open,2026-01-20
+T-1018,Can't kill legacy dashboard,Team wants to sunset the old dashboard but 300 customers still use it weekly.,open,2026-01-21
+T-1019,Onboarding email link dead,The onboarding email links to a removed page. New signups hit 404.,open,2026-01-22
+T-1020,No NPS follow-up,Detractors never get a follow-up. We lose the chance to save at-risk accounts.,open,2026-01-23
+T-1021,Reports too slow to render,Rendering reports with filters takes 30 seconds. Users believe the product is broken.,open,2026-01-24
+T-1022,Team seats confuse admins,Admin cannot see who consumed seats. Upgrade friction for champions.,open,2026-01-25
+T-1023,API rate limits undocumented,Integrators hit undocumented rate limits and blame our API. Retry guidance missing.,open,2026-01-26
+T-1024,Churn reason survey ignored,Exit survey responses are collected but never analyzed. Churn reasons are anecdotal.,open,2026-01-27
