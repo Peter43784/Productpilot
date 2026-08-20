@@ -4,21 +4,36 @@ Primary backend is Chroma (persistent, in-process). If Chroma is unavailable on 
 platform (e.g. very new Python versions), we transparently fall back to a numpy-based
 index with the same interface — the "0 infrastructure" story stays intact.
 
-Embeddings: OpenAI text-embedding-3-small when OPENAI_API_KEY is set, otherwise a
-deterministic hash embedding (offline mode).
+Embeddings: pluggable via PP_EMBEDDING_BACKEND (auto|gemini|hash). `auto` uses
+Gemini when GEMINI_API_KEY is set, otherwise a deterministic hash embedding
+(offline mode). An explicit PP_EMBEDDING_BACKEND=gemini also applies in mock
+mode, so semantic memory can be demoed without an LLM key. Any failure degrades
+to hash embeddings with a warning — embedding is never a hard dependency.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
+import urllib.request
 from pathlib import Path
 
 import numpy as np
 
 from .. import config
 
+log = logging.getLogger("productpilot.vector_store")
+
 EMBED_DIM = 256
+
+_EMBED_PRESETS: dict[str, dict] = {
+    "gemini": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "key": "GEMINI_API_KEY",
+        "model": "text-embedding-004",
+    },
+}
 
 
 def _hash_embed(text: str) -> list[float]:
@@ -32,21 +47,41 @@ def _hash_embed(text: str) -> list[float]:
     return vec.tolist()
 
 
-def _openai_embed(texts: list[str]) -> list[list[float]]:
-    from openai import OpenAI
+def _remote_embed(texts: list[str], base_url: str, api_key: str, model: str) -> list[list[float]]:
+    """Gemini embeddings via its OpenAI-compatible endpoint (stdlib only)."""
+    payload = {"model": model, "input": texts}
+    req = urllib.request.Request(
+        base_url.rstrip("/") + "/embeddings",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        body = json.loads(resp.read().decode("utf-8"))
+    return [d["embedding"] for d in sorted(body["data"], key=lambda d: d.get("index", 0))]
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    resp = client.embeddings.create(model=config.EMBEDDING_MODEL, input=texts)
-    return [d.embedding for d in resp.data]
+
+def _active_backend() -> str:
+    if config.EMBEDDING_BACKEND != "auto":
+        return config.EMBEDDING_BACKEND
+    if config.MOCK:
+        return "hash"
+    return "gemini" if os.getenv(_EMBED_PRESETS["gemini"]["key"]) else "hash"
 
 
 def embed(texts: list[str]) -> list[list[float]]:
-    if os.getenv("OPENAI_API_KEY") and not config.MOCK:
-        try:
-            return _openai_embed(texts)
-        except Exception:
-            pass
-    return [_hash_embed(t) for t in texts]
+    backend = _active_backend()
+    if backend == "hash":
+        return [_hash_embed(t) for t in texts]
+    preset = _EMBED_PRESETS.get(backend)
+    if preset is None:
+        log.warning("unknown embedding backend %r — falling back to hash embeddings", backend)
+        return [_hash_embed(t) for t in texts]
+    try:
+        return _remote_embed(texts, preset["base_url"], os.getenv(preset["key"]) or "", preset["model"])
+    except Exception as exc:
+        log.warning("embedding backend %s failed (%s) — falling back to hash embeddings", backend, exc)
+        return [_hash_embed(t) for t in texts]
 
 
 class MemoryDoc:
@@ -131,6 +166,8 @@ class VectorStore:
             if doc_type and doc.doc_type != doc_type:
                 continue
             dv = np.array(doc.embedding)
+            if dv.shape[0] != qv.shape[0]:
+                continue  # doc embedded with a different backend — re-seed to migrate
             score = float(np.dot(qv, dv) / max(np.linalg.norm(qv) * np.linalg.norm(dv), 1e-9))
             scored.append((score, doc))
         scored.sort(key=lambda x: x[0], reverse=True)

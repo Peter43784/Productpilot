@@ -12,7 +12,8 @@ validated, scored, traceable PRD — in minutes, not days.
 - 10-scenario eval harness with named failure modes
 - Works with **zero paid subscriptions**: `PRODUCTPILOT_MOCK=1` runs the whole flow offline
   with deterministic mock models (perfect for demos and CI); real keys unlock Claude 4.5/3.5,
-  Tavily web search, OpenAI embeddings, and LangSmith traces.
+  Tavily web search, and LangSmith traces. Semantic memory embeddings come free via Google
+  Gemini (`GEMINI_API_KEY`, no credit card) or fall back to deterministic hash embeddings.
 
 ## Quickstart
 
@@ -80,7 +81,7 @@ START ─ planner ─┬─ clarify_gate (interrupt) ─ researcher ─┐
 | Var | Purpose |
 |-----|---------|
 | `ANTHROPIC_API_KEY` | Claude Sonnet 4.5 (Planner/Researcher/Analyst/Writer), Haiku 3.5 (Critic) |
-| `OPENAI_API_KEY` | `text-embedding-3-small` embeddings |
+| `GEMINI_API_KEY` | semantic memory embeddings (`text-embedding-004`, free tier) |
 | `TAVILY_API_KEY` | web research |
 | `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` | LangSmith traces |
 | `PRODUCTPILOT_MOCK` | `1` = offline deterministic run (default `1`) |
