@@ -3,13 +3,16 @@ PRD approval) as live widgets and drives the LangGraph state machine."""
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import streamlit as st
 
-from .. import config
-from ..graph import GRAPH, new_thread_id, peek_run, resume_run, start_run
-from ..memory.stores import sqlite_store, vector_store
+from productpilot import config
+from productpilot.graph import GRAPH, new_thread_id, peek_run, resume_run, start_run
+from productpilot.memory.stores import sqlite_store, vector_store
 
 st.set_page_config(page_title="ProductPilot", page_icon="🛫", layout="wide")
 
