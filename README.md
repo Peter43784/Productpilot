@@ -27,7 +27,7 @@ copy .env.example .env         # add keys (optional; mock mode needs none)
 python seed_memory.py
 
 # 2a. Streamlit UI (HITL checkpoints rendered live)
-streamlit run productpilot/ui/app.py
+python -m streamlit run productpilot/ui/app.py
 
 # 2b. FastAPI backend
 python run_api.py               # then POST /run, /resume, GET /prds
