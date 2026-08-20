@@ -33,7 +33,7 @@ streamlit run productpilot/ui/app.py
 python run_api.py               # then POST /run, /resume, GET /prds
 
 # 2c. Non-interactive CLI (auto-approves checkpoints)
-python -m productpilot.cli --input "churn is high in month 2" --sources data/sources/zendesk_tickets.csv --org "Acme"
+python -m productpilot.cli --input "churn is high in month 2" --sources data/sources/zendesk_tickets.csv --org "Metrica"
 python -m productpilot.cli --input "..." --sources ... --json --fail-below 7.0   # exit 1 if critic < 7
 
 # 3. Eval harness (10 scripted scenarios)

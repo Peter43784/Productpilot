@@ -92,7 +92,7 @@ if thread is None:
     )
     st.text_area("PM request", key="pm_input", height=110,
                  placeholder="e.g. churn is high in month 2 — investigate and propose a fix")
-    st.text_input("Org name", key="org_name", placeholder="Acme Inc.")
+    st.text_input("Org name", key="org_name", placeholder="Metrica")
     st.multiselect(
         "Raw sources (sample data)", [p.name for p in sorted(DATA.iterdir())],
         key="selected_sources",

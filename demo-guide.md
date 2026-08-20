@@ -116,7 +116,7 @@ Open `http://localhost:8501`. You should see the **Run ProductPilot** form
 
 ### 3.1 Kick-off
 - **Request:** `Churn is high in month 2`
-- **Org:** `Acme Inc.`
+- **Org:** `Metrica` (see `demo-story.md` for the full company backstory)
 - **Sources:** select all 5 `data/sources/*` files (leave uploader empty)
 - Click **Run ProductPilot**
 
