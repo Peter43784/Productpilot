@@ -1,28 +1,30 @@
 """Planner — classifies the PM request; routes vague asks to a clarification gate."""
 from __future__ import annotations
 
-from .. import llm, prompts
+from .base import Agent
+from .. import prompts
 
 
-def run(state: dict) -> dict:
-    model = llm.get_llm("planner")
-    payload = {
-        "pm_input": state.get("pm_input", ""),
-        "org_name": state.get("org_name", ""),
-        "source_count": len(state.get("source_paths", [])),
-    }
-    response = llm.ask_json(model, prompts.PLANNER, llm_json_payload(payload))
-    parsed = response
-    return {
-        "needs_clarification": bool(parsed.get("needs_clarification", False)),
-        "clarifying_question": parsed.get("question", ""),
-        "request_type": parsed.get("request_type", "standard"),
-        "brief": parsed.get("brief", ""),
-        "status": "clarification_required" if parsed.get("needs_clarification") else "planning_done",
-    }
+class PlannerAgent(Agent):
+    role = "planner"
+    prompt = prompts.PLANNER
+    
+    def build_payload(self, state: dict) -> dict:
+        return {
+            "pm_input": state.get("pm_input", ""),
+            "org_name": state.get("org_name", ""),
+            "source_count": len(state.get("source_paths", [])),
+        }
+    
+    def parse_response(self, response: dict, state: dict) -> dict:
+        return {
+            "needs_clarification": bool(response.get("needs_clarification", False)),
+            "clarifying_question": response.get("question", ""),
+            "request_type": response.get("request_type", "standard"),
+            "brief": response.get("brief", ""),
+            "status": "clarification_required" if response.get("needs_clarification") else "planning_done",
+        }
 
 
-def llm_json_payload(payload: dict) -> str:
-    import json
-
-    return json.dumps(payload, ensure_ascii=False)
+planner = PlannerAgent()
+run = planner.run

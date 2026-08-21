@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from .base import Agent
 from .. import config, llm, prompts
 from ..security.injection import heuristic_scan, sanitize_text
 from ..tools.ingestion import load_sources
 from ..tools.search import web_search
-from .planner import llm_json_payload
 
 _SIGNAL_MAP = {
     "ticket": ("confusing", "slow", "missing", "error", "hard"),
@@ -111,31 +111,36 @@ def ingest(paths: list[str], pm_input: str) -> dict:
     }
 
 
-def run(state: dict) -> dict:
-    model = llm.get_llm("researcher")
-    paths = state.get("source_paths", [])
-    pm_input = state.get("pm_input", "")
+class ResearcherAgent(Agent):
+    role = "researcher"
+    prompt = prompts.RESEARCHER
+    
+    def build_payload(self, state: dict) -> dict:
+        paths = state.get("source_paths", [])
+        pm_input = state.get("pm_input", "")
+        research = ingest(paths, pm_input)
+        return {
+            "source_paths": paths,
+            "pm_input": pm_input,
+            "org_name": state.get("org_name", ""),
+            "request_type": state.get("request_type", "standard"),
+            "notes_summary": research["notes_summary"],
+            "digest": research["digest"],
+            "web_results": research["web_results"],
+            "injection_flags": research["injection_flags"],
+            "missing_files": research["missing_files"],
+        }
+    
+    def parse_response(self, response: dict, state: dict) -> dict:
+        research = self.build_payload(state)
+        research_notes = response.get("research_notes") or research["notes_summary"]
+        return {
+            "research_notes": research_notes,
+            "web_results": research["web_results"],
+            "injection_flags": research["injection_flags"],
+            "status": "research_done",
+        }
 
-    research = ingest(paths, pm_input)
 
-    payload = {
-        "source_paths": paths,
-        "pm_input": pm_input,
-        "org_name": state.get("org_name", ""),
-        "request_type": state.get("request_type", "standard"),
-        "notes_summary": research["notes_summary"],
-        "digest": research["digest"],
-        "web_results": research["web_results"],
-        "injection_flags": research["injection_flags"],
-        "missing_files": research["missing_files"],
-    }
-    response = llm.ask_json(model, prompts.RESEARCHER, llm_json_payload(payload))
-    parsed = response
-
-    research_notes = parsed.get("research_notes") or research["notes_summary"]
-    return {
-        "research_notes": research_notes,
-        "web_results": research["web_results"],
-        "injection_flags": research["injection_flags"],
-        "status": "research_done",
-    }
+researcher = ResearcherAgent()
+run = researcher.run

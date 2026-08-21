@@ -132,6 +132,12 @@ def parse_json(text: str) -> dict:
     raise LLMError(f"Could not parse JSON from model output: {text[:400]}")
 
 
+def to_json(payload: dict) -> str:
+    """Serialize payload to JSON string for LLM consumption."""
+    import json
+    return json.dumps(payload, ensure_ascii=False)
+
+
 # ------------------------------------------------------------------ mock brains
 
 def _mock_dispatch(role: str, system: str, user: str) -> str:
