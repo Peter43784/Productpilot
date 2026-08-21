@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
-from langgraph.types import Command, Interrupt, Send
+from langgraph.types import Command, Send
 
 from . import config
 from .agents import analyst, critic, planner, researcher, writer
@@ -266,6 +266,20 @@ def build_graph():
 GRAPH = build_graph()
 
 
+def _interrupt_payload_from_exc(exc: Exception) -> dict | None:
+    """Best-effort adapter for legacy LangGraph interrupt exceptions.
+
+    Older versions raised an exception that carried interrupt payload in `value`.
+    Newer versions pause the thread without raising.
+    """
+    value = getattr(exc, "value", None)
+    if value is None:
+        return None
+    values = value if isinstance(value, list) else [value]
+    payload = values[0] if values else {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def new_thread_id() -> str:
     return uuid.uuid4().hex[:16]
 
@@ -293,9 +307,10 @@ def run_with_auto_approval(
                 GRAPH.invoke(initial, config_)
             else:
                 GRAPH.invoke(Command(resume=resume), config_)
-        except Interrupt as exc:  # older langgraph semantics
-            values = exc.value if isinstance(exc.value, list) else [exc.value]
-            payload = values[0] if values else {}
+        except Exception as exc:
+            payload = _interrupt_payload_from_exc(exc)
+            if payload is None:
+                raise
             interrupts_seen.append(payload)
             resume = {"answer": auto_answer} if payload.get("type") == "clarification" else {"approved": True, "feedback": ""}
             continue
@@ -339,9 +354,10 @@ def resume_run(thread: str, resume: dict) -> dict:
     config_ = {"configurable": {"thread_id": thread}}
     try:
         GRAPH.invoke(Command(resume=resume), config_)
-    except Interrupt as exc:  # older langgraph semantics
-        values = exc.value if isinstance(exc.value, list) else [exc.value]
-        payload = values[0] if values else {}
+    except Exception as exc:
+        payload = _interrupt_payload_from_exc(exc)
+        if payload is None:
+            raise
         return {"state": GRAPH.get_state(config_).values, "interrupt": payload}
     payload = _pending_interrupt(thread)
     return {"state": GRAPH.get_state(config_).values, "interrupt": payload, "finished": payload is None}
