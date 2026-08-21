@@ -80,7 +80,7 @@ START ─ planner ─┬─ clarify_gate (interrupt) ─ researcher ─┐
 
 | Var | Purpose |
 |-----|---------|
-| `ANTHROPIC_API_KEY` | Claude Sonnet 4.5 (Planner/Researcher/Analyst/Writer), Haiku 3.5 (Critic) |
+| `ANTHROPIC_API_KEY` | Claude Sonnet 4.5 (Planner/Researcher/Analyst/Writer), Haiku 4.5 (Critic) |
 | `GEMINI_API_KEY` | semantic memory embeddings (`text-embedding-004`, free tier) |
 | `TAVILY_API_KEY` | web research |
 | `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` | LangSmith traces |

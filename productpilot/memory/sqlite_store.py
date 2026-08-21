@@ -40,6 +40,41 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _sqlite_value(value):
+    """Convert nested Python objects to SQLite-safe scalar/text values."""
+    if value is None or isinstance(value, (str, int, float)):
+        return value
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (dict, list, tuple)):
+        return json.dumps(value, default=str)
+    return str(value)
+
+
+def _sqlite_real(value):
+    """Extract a numeric score when possible; otherwise fall back to text-safe encoding."""
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return _sqlite_value(value)
+    if isinstance(value, dict):
+        for key in ("rice", "total", "score", "value"):
+            candidate = value.get(key)
+            if isinstance(candidate, (int, float)):
+                return float(candidate)
+            if isinstance(candidate, str):
+                try:
+                    return float(candidate)
+                except ValueError:
+                    continue
+    return _sqlite_value(value)
+
+
 class SQLiteStore:
     def __init__(self, path=None):
         self.path = str(path or config.SQLITE_PATH)
@@ -83,10 +118,14 @@ class SQLiteStore:
             )
             prd_id = int(cur.lastrowid)
             for d in decisions or []:
+                option_name = _sqlite_value(d.get("name"))
+                rice = _sqlite_real(d.get("rice"))
+                confidence_label = _sqlite_value(d.get("confidence_label"))
+                rationale = _sqlite_value(d.get("rationale"))
                 conn.execute(
                     "INSERT INTO decisions (prd_id, option_name, rice, confidence_label, rationale)"
                     " VALUES (?,?,?,?,?)",
-                    (prd_id, d.get("name"), d.get("rice"), d.get("confidence_label"), d.get("rationale")),
+                    (prd_id, option_name, rice, confidence_label, rationale),
                 )
             conn.commit()
             return prd_id

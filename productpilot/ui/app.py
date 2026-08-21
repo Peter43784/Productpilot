@@ -34,14 +34,18 @@ def _poll(thread: str) -> None:
 
 
 def _resume(resume: dict) -> None:
+    """Execute a resume payload then rerun. Only call when _processing is already True."""
     thread = st.session_state["thread"]
     out = resume_run(thread, resume)
     snap = {"state": out["state"], "interrupt": out["interrupt"], "finished": out["interrupt"] is None}
     _set_snapshot(snap)
+    st.session_state.pop("_processing", None)
+    st.session_state.pop("_pending_resume", None)
     st.rerun()
 
 
 def _start() -> None:
+    """Execute the initial run. Only call when _processing is already True."""
     files = st.session_state.get("selected_sources", [])
     uploads = st.session_state.get("uploaded_files", [])
     paths = [str(DATA / f) for f in files]
@@ -52,7 +56,10 @@ def _start() -> None:
         paths.append(str(target))
     thread = start_run(st.session_state["pm_input"], paths, st.session_state.get("org_name", ""))
     st.session_state["thread"] = thread
+    st.session_state.pop("_processing", None)
+    st.session_state.pop("_pending_start", None)
     _poll(thread)
+    st.rerun()
 
 
 def _reset() -> None:
@@ -99,10 +106,18 @@ if thread is None:
     )
     st.file_uploader("…or upload your own (CSV / JSON / MD)", type=["csv", "json", "jsonl", "md", "txt"],
                      accept_multiple_files=True, key="uploaded_files")
-    if st.button("Run ProductPilot", type="primary", use_container_width=True):
+    _busy = st.session_state.get("_processing", False)
+    if st.button("Run ProductPilot", type="primary", use_container_width=True, disabled=_busy):
         if not st.session_state.get("pm_input", "").strip():
             st.warning("Describe the request first.")
         else:
+            # Phase 1: mark busy and rerun so buttons render disabled on next pass
+            st.session_state["_processing"] = True
+            st.session_state["_pending_start"] = True
+            st.rerun()
+    if _busy and st.session_state.get("_pending_start"):
+        # Phase 2: buttons are now disabled, execute the work
+        with st.spinner("Agents are running — researcher, analyst, writer… (may take a minute)"):
             _start()
 else:
     st.button("↺ Reset", on_click=_reset)
@@ -117,12 +132,18 @@ interrupt = snap["interrupt"]
 if interrupt is not None:
     kind = interrupt.get("type")
     st.subheader(f"⏸ Human-in-the-loop — {kind}")
+    _busy = st.session_state.get("_processing", False)
     if kind == "clarification":
         st.info(interrupt.get("question"))
-        answer = st.text_input("Your answer", key="clar_ans")
-        if st.button("Continue", type="primary"):
+        answer = st.text_input("Your answer", key="clar_ans", disabled=_busy)
+        if st.button("Continue", type="primary", disabled=_busy):
             if answer.strip():
-                _resume({"answer": answer})
+                st.session_state["_processing"] = True
+                st.session_state["_pending_resume"] = {"answer": answer}
+                st.rerun()
+        if _busy and st.session_state.get("_pending_resume"):
+            with st.spinner("Resuming agents…"):
+                _resume(st.session_state["_pending_resume"])
     elif kind == "synthesis_approval":
         left, right = st.columns(2)
         with left:
@@ -142,12 +163,19 @@ if interrupt is not None:
             if state.get("injection_flags"):
                 st.error(f"{len(state.get('injection_flags'))} prompt-injection attempt(s) quarantined")
         st.markdown("—")
-        feedback = st.text_area("Feedback (only if you want revisions)", key="syn_fb", height=80)
+        feedback = st.text_area("Feedback (only if you want revisions)", key="syn_fb", height=80, disabled=_busy)
         c1, c2 = st.columns(2)
-        if c1.button("Approve synthesis → draft PRD", type="primary", use_container_width=True):
-            _resume({"approved": True, "feedback": ""})
-        if c2.button("Reject & revise", use_container_width=True):
-            _resume({"approved": False, "feedback": feedback or "Tighten the synthesis."})
+        if c1.button("Approve synthesis → draft PRD", type="primary", use_container_width=True, disabled=_busy):
+            st.session_state["_processing"] = True
+            st.session_state["_pending_resume"] = {"approved": True, "feedback": ""}
+            st.rerun()
+        if c2.button("Reject & revise", use_container_width=True, disabled=_busy):
+            st.session_state["_processing"] = True
+            st.session_state["_pending_resume"] = {"approved": False, "feedback": feedback or "Tighten the synthesis."}
+            st.rerun()
+        if _busy and st.session_state.get("_pending_resume"):
+            with st.spinner("Drafting PRD — writer and critic are working…"):
+                _resume(st.session_state["_pending_resume"])
     elif kind == "prd_approval":
         left, right = st.columns([3, 2])
         with left:
@@ -162,12 +190,19 @@ if interrupt is not None:
                 st.markdown("**Critic feedback**")
                 for f in state["critic_feedback"][:6]:
                     st.markdown(f"- {f}")
-        feedback = st.text_area("Feedback (if you reject)", key="prd_fb", height=80)
+        feedback = st.text_area("Feedback (if you reject)", key="prd_fb", height=80, disabled=_busy)
         c1, c2 = st.columns(2)
-        if c1.button("Approve PRD → commit to memory", type="primary", use_container_width=True):
-            _resume({"approved": True, "feedback": ""})
-        if c2.button("Reject & revise", use_container_width=True):
-            _resume({"approved": False, "feedback": feedback or "Address the critic's weakest dimension."})
+        if c1.button("Approve PRD → commit to memory", type="primary", use_container_width=True, disabled=_busy):
+            st.session_state["_processing"] = True
+            st.session_state["_pending_resume"] = {"approved": True, "feedback": ""}
+            st.rerun()
+        if c2.button("Reject & revise", use_container_width=True, disabled=_busy):
+            st.session_state["_processing"] = True
+            st.session_state["_pending_resume"] = {"approved": False, "feedback": feedback or "Address the critic's weakest dimension."}
+            st.rerun()
+        if _busy and st.session_state.get("_pending_resume"):
+            with st.spinner("Committing to memory…"):
+                _resume(st.session_state["_pending_resume"])
     st.stop()
 
 # ---------------------------------------------------------------- finished state
