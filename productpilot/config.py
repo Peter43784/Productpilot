@@ -25,7 +25,6 @@ CHROMA_DIR = Path(os.getenv("PP_CHROMA_DIR", DB_DIR / "chroma"))
 MOCK = os.getenv("PRODUCTPILOT_MOCK", "1") not in ("0", "false", "False")
 MODEL_SONNET = os.getenv("PP_MODEL_SONNET", "claude-sonnet-4-5")
 MODEL_HAIKU = os.getenv("PP_MODEL_HAIKU", "claude-haiku-4-5")
-EMBEDDING_BACKEND = os.getenv("PP_EMBEDDING_BACKEND", "local")  # auto|gemini|hash|local
 CRITIC_THRESHOLD = float(os.getenv("PP_CRITIC_THRESHOLD", "7.0"))
 MAX_REVISIONS = int(os.getenv("PP_MAX_REVISIONS", "2"))
 TOP_THEMES = int(os.getenv("PP_TOP_THEMES", "6"))
