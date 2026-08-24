@@ -90,3 +90,7 @@ START ─ planner ─┬─ clarify_gate (interrupt) ─ researcher ─┐
 - RICE sizing is a PM estimate range, not ground truth
 - Cold start: empty memory produces generic recommendations until seeded (`python seed_memory.py`)
 - Prompt-injection content is detected and redacted before it reaches the model, but the scanner is regex-based — it complements, not replaces, a safety classifier
+
+## Project presentation
+
+- [`productpilot.html`](productpilot.html) — standalone HTML presentation with problem statement, architecture diagram, tech stack, 10 eval scenarios, and known limitations
