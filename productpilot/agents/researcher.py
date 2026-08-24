@@ -1,143 +1,46 @@
 """Researcher — ingests raw sources, gathers web context, flags prompt injection.
 
-Ingestion, injection scanning, and web search run in the agent itself (both mock and
-real modes). The model receives a bounded, *sanitized* digest of the sources plus a
-structured per-source summary — never raw, unsanitized file content.
+Uses function-calling to invoke ingestion and web search tools.
+The model decides when to call tools and how to synthesize results.
 """
 from __future__ import annotations
 
-from collections import defaultdict
-
 from .base import Agent
-from .. import config, llm, prompts
-from ..security.injection import heuristic_scan, sanitize_text
-from ..tools.ingestion import load_sources
-from ..tools.search import web_search
-
-_SIGNAL_MAP = {
-    "ticket": ("confusing", "slow", "missing", "error", "hard"),
-    "review": ("rating", "praise", "complaint", "mobile", "price"),
-    "nps": ("detractor", "promoter", "passive", "comment"),
-    "interview": ("interview", "said", "wants", "struggles", "uses"),
-}
-
-SAMPLE_ROWS = 200
-DIGEST_ROWS_PER_KIND = 60
-DIGEST_MAX_CHARS = 15_000
-
-
-def _signals(kind: str, pm_input: str, group: list) -> list[str]:
-    joined = " ".join(c.text.lower() for c in group)
-    words = _SIGNAL_MAP.get(kind, ("feedback",))
-    hits = [w for w in words if w in joined]
-    signals = [f"{kind}-signal: '{w}' appears in {joined.count(w)} documents" for w in hits[:4]]
-    if pm_input:
-        signals.append(f"relates to PM focus: {pm_input[:80]}")
-    return signals or [f"parsed {len(group)} {kind} records"]
-
-
-def ingest(paths: list[str], pm_input: str) -> dict:
-    """Parse sources, scan + sanitize content, run web research. Shared by mock & real."""
-    chunks = load_sources(paths)
-
-    per_chunk_flags = {i: heuristic_scan(c.text) for i, c in enumerate(chunks)}
-    flags: list[dict] = []
-    for i, c in enumerate(chunks):
-        for f in per_chunk_flags[i]:
-            f = dict(f)
-            f["source"] = c.source_path
-            flags.append(f)
-    if flags:
-        try:
-            classifier = llm.get_llm("classifier")
-            verdict = llm.ask_json(
-                classifier,
-                prompts.CLASSIFIER,
-                " ".join(f["snippet"] for f in flags),
-            )
-            if not verdict.get("is_injection", True):
-                flags = []
-        except Exception:
-            pass
-
-    sanitized = [
-        sanitize_text(c.text, per_chunk_flags[i]) if per_chunk_flags[i] else c.text
-        for i, c in enumerate(chunks)
-    ]
-
-    by_kind: dict[str, list] = defaultdict(list)
-    for c, text in zip(chunks, sanitized):
-        by_kind[c.kind].append((c, text))
-
-    notes_summary = []
-    for kind, group in sorted(by_kind.items()):
-        volume = len(group)
-        texts = [t for _, t in group]
-        quotes = [t[:160].replace("\n", " ") for t in texts[:3]]
-        sample = " ".join(texts[:SAMPLE_ROWS])
-        signals = _signals(kind, pm_input, [c for c, _ in group])
-        notes_summary.append(
-            {
-                "source": group[0][0].source_path,
-                "kind": kind,
-                "volume": volume,
-                "signals": signals[:5],
-                "quotes": quotes,
-                "sample": sample,
-            }
-        )
-
-    digest_parts = []
-    used = 0
-    for kind, group in sorted(by_kind.items()):
-        for _, text in group[:DIGEST_ROWS_PER_KIND]:
-            piece = text[:300].replace("\n", " ")
-            if used + len(piece) > DIGEST_MAX_CHARS:
-                break
-            digest_parts.append(f"[{kind}] {piece}")
-            used += len(piece)
-        if used >= DIGEST_MAX_CHARS:
-            break
-    digest = "\n".join(digest_parts)
-
-    web = web_search(f"{pm_input} competitors 2026")
-
-    return {
-        "notes_summary": notes_summary,
-        "digest": digest,
-        "web_results": web,
-        "injection_flags": flags,
-        "missing_files": [c.source_path for c in chunks if c.kind == "error"],
-    }
+from .. import prompts
+from ..tools.agent_tools import RESEARCHER_TOOLS
 
 
 class ResearcherAgent(Agent):
     role = "researcher"
     prompt = prompts.RESEARCHER
+    tools = RESEARCHER_TOOLS
     
     def build_payload(self, state: dict) -> dict:
-        paths = state.get("source_paths", [])
-        pm_input = state.get("pm_input", "")
-        research = ingest(paths, pm_input)
         return {
-            "source_paths": paths,
-            "pm_input": pm_input,
+            "source_paths": state.get("source_paths", []),
+            "pm_input": state.get("pm_input", ""),
             "org_name": state.get("org_name", ""),
             "request_type": state.get("request_type", "standard"),
-            "notes_summary": research["notes_summary"],
-            "digest": research["digest"],
-            "web_results": research["web_results"],
-            "injection_flags": research["injection_flags"],
-            "missing_files": research["missing_files"],
         }
     
-    def parse_response(self, response: dict, state: dict) -> dict:
-        research = self.build_payload(state)
-        research_notes = response.get("research_notes") or research["notes_summary"]
+    def parse_response(self, response: str, state: dict) -> dict:
+        import json, re
+        text = response if isinstance(response, str) else str(response)
+        match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
+        if match:
+            text = match.group(1)
+        else:
+            start, end = text.find('{'), text.rfind('}')
+            if start != -1 and end > start:
+                text = text[start:end+1]
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            data = {}
         return {
-            "research_notes": research_notes,
-            "web_results": research["web_results"],
-            "injection_flags": research["injection_flags"],
+            "research_notes": data.get("research_notes", []),
+            "web_results": data.get("web_results", ""),
+            "injection_flags": data.get("injection_flags", []),
             "status": "research_done",
         }
 
