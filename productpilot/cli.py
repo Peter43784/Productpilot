@@ -14,22 +14,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--input", required=True, help="PM request, e.g. 'churn is high in month 2'")
     parser.add_argument("--sources", nargs="*", default=[], help="raw source files (CSV/JSON/MD)")
     parser.add_argument("--org", default="", help="company / org name")
-    parser.add_argument("--mock", choices=["0", "1"], default=None, help="override PRODUCTPILOT_MOCK")
     parser.add_argument("--auto-answer", default="The analytics product, new trial signups.", help="answer used at clarification checkpoints")
     parser.add_argument("--fail-below", type=float, default=None, help="exit non-zero if the Critic overall score is below this value")
     parser.add_argument("--json", action="store_true", help="emit JSON report")
     args = parser.parse_args(argv)
 
-    if args.mock is not None:
-        import os
-
-        os.environ["PRODUCTPILOT_MOCK"] = args.mock
-
     from . import config
     from .graph import run_with_auto_approval
     from .memory.stores import sqlite_store, vector_store
 
-    print(f"ProductPilot (mock={config.MOCK})")
+    print("ProductPilot")
     print(f"  memory: {config.SQLITE_PATH.name} + vector index ({vector_store().backend}, {vector_store().count()} docs)")
 
     try:

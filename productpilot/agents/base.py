@@ -12,11 +12,15 @@ class Agent(ABC):
     
     role: str
     prompt: str
+    output_json: bool = True  # Override in subclass for non-JSON output
     
     def run(self, state: dict) -> dict:
         model = llm.get_llm(self.role)
         payload = self.build_payload(state)
-        response = llm.ask_json(model, self.prompt, llm.to_json(payload))
+        if self.output_json:
+            response = llm.ask_json(model, self.prompt, llm.to_json(payload))
+        else:
+            response = llm.ask(model, self.prompt, llm.to_json(payload))
         return self.parse_response(response, state)
     
     @abstractmethod
@@ -25,7 +29,7 @@ class Agent(ABC):
         pass
     
     @abstractmethod
-    def parse_response(self, response: dict, state: dict) -> dict:
+    def parse_response(self, response: Any, state: dict) -> dict:
         """Parse the LLM response into state updates."""
         pass
 

@@ -22,64 +22,19 @@ $env:PYTHONPATH="D:\Development\Productpilot"
 pip install -r requirements.txt
 ```
 
-**Keys: none required.** This guide runs in **mock mode** (`PRODUCTPILOT_MOCK=1`,
-the default in `.env`) — all agents, tools, and memory are local and
-deterministic. No OpenAI, no Anthropic, no Tavily.
+**Keys required:** `ANTHROPIC_API_KEY` and `TAVILY_API_KEY` in `.env`.
 
-### Optional upgrade: semantic memory via Gemini (free, no credit card)
+### Semantic memory (local, free, no API key)
 
-No OpenAI key? Google's Gemini embeddings are free and need no card. Setup:
+Uses local sentence-transformers (`all-MiniLM-L6-v2`, 384-dim, free, offline):
 
-1. **Get a key** — go to <https://aistudio.google.com/apikey> and sign in with a
-   Google account → **"Get API key"** → **"Create API key in new project"** →
-   copy the key (starts with `AIza...`).
-2. **Configure `.env`** (project root):
-   ```ini
-   GEMINI_API_KEY=AIza...your-key-here
-   PP_EMBEDDING_BACKEND=gemini
-   ```
-3. **Re-seed memory** (Gemini vectors are 768-dim; old hash vectors are 256-dim,
-   so the store must be rebuilt):
-   ```powershell
-   Remove-Item -Recurse -Force data\db
-   python seed_memory.py
-   ```
-   Expect: `Seeded 3 new memory doc(s)`.
-4. **Verify** (should print `768`, not `256`):
-   ```powershell
-   python -c "from productpilot.memory.vector_store import embed; print(len(embed(['test'])[0]))"
-   ```
+```powershell
+# No extra config needed — local embeddings work out of the box
+# Verify:
+python -c "from productpilot.memory.vector_store import embed; print(len(embed(['test'])[0]))"
+```
 
-**How it behaves:**
-
-- `PP_EMBEDDING_BACKEND=gemini` (explicit) applies **even in mock mode** —
-  deterministic agents + real semantic memory, with only the Gemini key. This is
-  the recommended demo setup.
-- Leave it as `auto` and Gemini activates automatically in real mode
-  (`PRODUCTPILOT_MOCK=0`) whenever `GEMINI_API_KEY` is set; otherwise hash.
-- Any embedding failure (bad key, network, quota) degrades to hash embeddings
-  with a warning logged — never a crash.
-- Free-tier limits: ~100 requests/min and 1k requests/day for embeddings (ample
-  for demos); Google may use free-tier data for model training — paid/Vertex
-  tiers don't. No SLA on the free tier.
-- **To revert** to zero-key mode: remove `GEMINI_API_KEY` and
-  `PP_EMBEDDING_BACKEND` from `.env`, then re-seed again (step 3).
-- If you skip the re-seed after switching backends, mixed-dimension docs are
-  skipped in search (guarded, no crash) — memory simply looks thinner until you
-  re-seed.
-
-### Limitation to state honestly (hash embeddings, no Gemini key)
-
-| Component | Hash fallback (no key) | Gemini (free) |
-|---|---|---|
-| Memory embeddings | deterministic 256-dim hash (lexical) | `text-embedding-004`, 768-dim, semantic |
-| Memory recall | keyword overlap only | matches by meaning |
-| Cost / keys | zero, nothing needed | free, no card, one Google key |
-
-Without any embedding key, phrase the clarification answer to share vocabulary
-with the Q1 memory docs (done in step 3.4 below) so recall visibly works.
-Nothing crashes either way; the fallback is automatic. Optional real-LLM mode
-(Anthropic key only) is described in section 6.
+Expect: `384`
 
 ---
 
@@ -129,8 +84,7 @@ The app asks *"Which product area and user segment?"*
 - Click **Continue**
 
 > Say: "The answer is routed back into state; the Q1 memory docs (seeded in step
-> 1) now match — by keyword overlap with hash embeddings, or by meaning with the
-> Gemini upgrade — so the analyst can recall prior decisions."
+> 1) now match — by semantic similarity — so the analyst can recall prior decisions."
 
 ### 3.3 Checkpoint 2 — Synthesis approval (⏸)
 You'll see themes with sentiment + mention counts, contradictions, RICE
@@ -144,8 +98,7 @@ options, and (in the trace) injection quarantine.
 - Left: full PRD draft; Right: **critic rubric** — 7 dimension bars + overall
 - Click **Approve PRD → commit to memory**
 
-> Say: "The writer drafted it, the critic scored it against the rubric; mock
-> mode passes at 8/10, well above the 7.0 bar. Optionally reject once to show
+> Say: "The writer drafted it, the critic scored it against the rubric; passes at 8/10, well above the 7.0 bar. Optionally reject once to show
 > the revision loop live."
 
 ### 3.5 Done — committed
@@ -160,7 +113,7 @@ options, and (in the trace) injection quarantine.
 
 ### 3.6 (Optional) Show the critic loop
 At checkpoint 3, click **Reject & revise** — the writer revises and the critic
-rescales (real behavior; in mock it visibly improves). Then approve.
+rescales. Then approve.
 
 ## 4. B-roll (if time permits)
 
@@ -177,13 +130,13 @@ rescales (real behavior; in mock it visibly improves). Then approve.
 Remove-Item -Recurse -Force data\db; python seed_memory.py
 ```
 
-## 6. Optional: real-LLM mode (Anthropic key only)
+## 6. LangSmith tracing (optional)
 
-Set in `.env`: `PRODUCTPILOT_MOCK=0`, `ANTHROPIC_API_KEY=sk-ant-...`
-(optionally `TAVILY_API_KEY` for live web research). Embeddings: with
-`GEMINI_API_KEY` set (or `PP_EMBEDDING_BACKEND=gemini`), memory is semantic;
-otherwise they stay on the hash fallback described above.
+Set in `.env`:
+```
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=your-langsmith-key
+LANGCHAIN_PROJECT=productpilot
+```
 
-Then repeat section 3. Expected differences: real prose, live web results,
-`ask_json` self-correction messages if a parse hiccups (not an error). Same
-checkpoints, same UI.
+Then repeat section 3. Traces will appear in LangSmith with full agent span details.

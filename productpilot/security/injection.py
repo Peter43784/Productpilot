@@ -49,9 +49,9 @@ def sanitize_text(text: str, flags: list[dict]) -> str:
 
 
 def scan(text: str) -> list[dict]:
-    """Scan text; optionally confirm with the classifier model when patterns match."""
+    """Scan text; confirm with the classifier model when patterns match."""
     flags = heuristic_scan(text)
-    if flags and not config.MOCK:
+    if flags:
         try:
             classifier = llm.get_llm("classifier")
             verdict = llm.parse_json(llm.ask(classifier, llm_import_prompts().CLASSIFIER, text))

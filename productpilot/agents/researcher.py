@@ -47,7 +47,7 @@ def ingest(paths: list[str], pm_input: str) -> dict:
             f = dict(f)
             f["source"] = c.source_path
             flags.append(f)
-    if flags and not config.MOCK:
+    if flags:
         try:
             classifier = llm.get_llm("classifier")
             verdict = llm.ask_json(

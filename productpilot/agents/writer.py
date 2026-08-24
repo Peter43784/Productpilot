@@ -8,6 +8,7 @@ from .. import prompts
 class WriterAgent(Agent):
     role = "writer"
     prompt = prompts.WRITER
+    output_json = False  # Writer outputs markdown, not JSON
     
     def build_payload(self, state: dict) -> dict:
         return {
@@ -25,7 +26,7 @@ class WriterAgent(Agent):
             "revision": state.get("revisions", 0),
         }
     
-    def parse_response(self, response: dict, state: dict) -> dict:
+    def parse_response(self, response: str, state: dict) -> dict:
         return {"prd_draft": response, "status": "drafted"}
 
 

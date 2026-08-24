@@ -22,7 +22,6 @@ SQLITE_PATH = Path(os.getenv("PP_SQLITE_PATH", DB_DIR / "productpilot.db"))
 CHROMA_DIR = Path(os.getenv("PP_CHROMA_DIR", DB_DIR / "chroma"))
 
 # --- behavior ---
-MOCK = os.getenv("PRODUCTPILOT_MOCK", "1") not in ("0", "false", "False")
 MODEL_SONNET = os.getenv("PP_MODEL_SONNET", "claude-sonnet-4-5")
 MODEL_HAIKU = os.getenv("PP_MODEL_HAIKU", "claude-haiku-4-5")
 CRITIC_THRESHOLD = float(os.getenv("PP_CRITIC_THRESHOLD", "7.0"))
