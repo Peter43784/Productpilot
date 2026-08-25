@@ -509,12 +509,12 @@
         <div class="si"><div class="sd" style="background:#B45309;"></div><div class="sn">Claude Haiku 4.5</div><div class="sr">Critic, classifier</div></div>
         <p class="snote">Haiku for Critic keeps cost low (~4&times; cheaper). Sonnet only where deep reasoning is needed. Cost story is ready for judge Q&amp;A.</p>
       </div>
-      <div class="stack-card">
-        <div class="scat">Memory &amp; RAG</div>
+<div class="stack-card">
+        <div class="scat">Memory & RAG</div>
         <div class="si"><div class="sd" style="background:#2348D4;"></div><div class="sn">Chroma</div><div class="sr">vector store</div></div>
-        <div class="si"><div class="sd" style="background:#4A7CF8;"></div><div class="sn">text-embedding-3-small</div><div class="sr">embeddings</div></div>
+        <div class="si"><div class="sd" style="background:#4A7CF8;"></div><div class="sn">all-MiniLM-L6-v2</div><div class="sr">embeddings (local)</div></div>
         <div class="si"><div class="sd" style="background:#6B46C1;"></div><div class="sn">SQLite</div><div class="sr">structured memory</div></div>
-        <p class="snote">Chroma runs in-process with no infra. SQLite tracks structured decisions (dates, authors, RICE values). Both reset cleanly for demo reproducibility.</p>
+        <p class="snote">Chroma runs in-process with no infra; falls back to numpy index if unavailable. Embeddings use Sentence Transformers (384-dim, offline, no API key). SQLite tracks structured decisions (dates, authors, RICE values).</p>
       </div>
       <div class="stack-card">
         <div class="scat">Tools &amp; UI</div>
