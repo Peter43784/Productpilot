@@ -412,7 +412,7 @@
     <div class="arch-layout">
       <div>
         <div class="agent-diagram">
-          <svg viewBox="0 0 500 450" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;margin:0 auto;">
+          <svg viewBox="0 0 500 640" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;margin:0 auto;">
             <defs>
               <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3B6CF8"/><stop offset="100%" stop-color="#2348D4"/></linearGradient>
               <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#D95F28"/><stop offset="100%" stop-color="#B84B1A"/></linearGradient>
@@ -420,52 +420,57 @@
               <linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6B46C1"/><stop offset="100%" stop-color="#553592"/></linearGradient>
               <linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#B45309"/><stop offset="100%" stop-color="#924410"/></linearGradient>
             </defs>
-            <!-- Grid -->
-            <line x1="0" y1="225" x2="500" y2="225" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-            <line x1="250" y1="0" x2="250" y2="450" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <!-- Vertical guide -->
+            <line x1="250" y1="0" x2="250" y2="640" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
             <!-- Input box -->
             <rect x="170" y="12" width="160" height="32" rx="6" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
             <text x="250" y="33" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono, monospace" font-size="11">PM input + raw sources</text>
             <!-- Input -> Planner -->
             <line x1="250" y1="44" x2="250" y2="80" stroke="#4A7CF8" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5" class="fl"/>
-            <!-- Planner node -->
+            <!-- 1. Planner node -->
             <rect x="175" y="86" width="150" height="50" rx="10" fill="url(#g1)" opacity="0.95"/>
-            <text x="250" y="108" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">Planner</text>
+            <text x="250" y="108" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">1 &middot; Planner</text>
             <text x="250" y="125" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">orchestrates &amp; routes</text>
             <!-- Planner -> Researcher -->
-            <path d="M210 136 C190 158 120 165 110 182" stroke="#D95F28" stroke-width="1.5" fill="none" stroke-dasharray="5 5" opacity="0.6" class="fl"/>
-            <!-- Planner -> Analyst -->
-            <path d="M290 136 C310 158 380 165 390 182" stroke="#1A7A4E" stroke-width="1.5" fill="none" stroke-dasharray="5 5" opacity="0.6" class="fl"/>
-            <!-- Researcher node -->
-            <rect x="18" y="188" width="160" height="58" rx="10" fill="url(#g2)" opacity="0.95"/>
-            <text x="98" y="210" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">Researcher</text>
-            <text x="98" y="226" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">web search &middot; ingestion</text>
-            <text x="98" y="240" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono, monospace" font-size="9">Tavily &middot; file I/O</text>
-            <!-- Analyst node -->
-            <rect x="322" y="188" width="160" height="58" rx="10" fill="url(#g3)" opacity="0.95"/>
-            <text x="402" y="210" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">Analyst</text>
-            <text x="402" y="226" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">RAG &middot; RICE scoring</text>
-            <text x="402" y="240" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono, monospace" font-size="9">Chroma &middot; embedding</text>
+            <line x1="250" y1="136" x2="250" y2="172" stroke="#D95F28" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6" class="fl"/>
+            <!-- 2. Researcher node -->
+            <rect x="150" y="172" width="200" height="58" rx="10" fill="url(#g2)" opacity="0.95"/>
+            <text x="250" y="194" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">2 &middot; Researcher</text>
+            <text x="250" y="210" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">web search &middot; ingestion</text>
+            <text x="250" y="224" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono, monospace" font-size="9">Tavily &middot; file I/O</text>
+            <!-- Researcher -> Analyst -->
+            <line x1="250" y1="230" x2="250" y2="266" stroke="#1A7A4E" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6" class="fl"/>
+            <!-- 3. Analyst node -->
+            <rect x="150" y="266" width="200" height="58" rx="10" fill="url(#g3)" opacity="0.95"/>
+            <text x="250" y="288" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">3 &middot; Analyst</text>
+            <text x="250" y="304" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">RAG &middot; RICE scoring</text>
+            <text x="250" y="318" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono, monospace" font-size="9">Chroma &middot; embedding</text>
+            <!-- Analyst -> checkpoint -->
+            <line x1="250" y1="324" x2="250" y2="340" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6" class="fl"/>
             <!-- Checkpoint banner -->
-            <rect x="170" y="260" width="160" height="26" rx="13" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 3"/>
-            <text x="250" y="278" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-family="JetBrains Mono, monospace" font-size="10">&#9654; PM approval checkpoint</text>
-            <!-- Researcher -> Writer -->
-            <path d="M98 246 C98 280 175 290 185 308" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none" stroke-dasharray="5 5" class="fl"/>
-            <!-- Analyst -> Writer -->
-            <path d="M402 246 C402 280 325 290 315 308" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none" stroke-dasharray="5 5" class="fl"/>
-            <!-- PRD Writer node -->
-            <rect x="175" y="312" width="150" height="52" rx="10" fill="url(#g4)" opacity="0.95"/>
-            <text x="250" y="334" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">PRD Writer</text>
-            <text x="250" y="350" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">structured template</text>
+            <rect x="170" y="340" width="160" height="26" rx="13" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="250" y="358" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-family="JetBrains Mono, monospace" font-size="10">&#9654; PM approval checkpoint</text>
+            <!-- checkpoint -> Writer -->
+            <line x1="250" y1="366" x2="250" y2="402" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6" class="fl"/>
+            <!-- 4. PRD Writer node -->
+            <rect x="175" y="402" width="150" height="52" rx="10" fill="url(#g4)" opacity="0.95"/>
+            <text x="250" y="424" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">4 &middot; PRD Writer</text>
+            <text x="250" y="440" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">structured template</text>
             <!-- Writer -> Critic -->
-            <line x1="250" y1="364" x2="250" y2="388" stroke="#B45309" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.7" class="fl"/>
-            <!-- Critic node -->
-            <rect x="175" y="392" width="150" height="46" rx="10" fill="url(#g5)" opacity="0.95"/>
-            <text x="250" y="413" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">Critic</text>
-            <text x="250" y="430" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">7-point rubric &middot; loop &le;2</text>
-            <!-- Critic -> Writer loop -->
-            <path d="M175 415 C130 415 130 338 175 338" stroke="#B45309" stroke-width="1.5" fill="none" stroke-dasharray="5 5" opacity="0.45" class="fl"/>
-            <text x="110" y="382" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-family="JetBrains Mono, monospace" font-size="9">revise</text>
+            <line x1="250" y1="454" x2="250" y2="490" stroke="#B45309" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.7" class="fl"/>
+            <!-- 5. Critic node -->
+            <rect x="175" y="490" width="150" height="46" rx="10" fill="url(#g5)" opacity="0.95"/>
+            <text x="250" y="511" text-anchor="middle" fill="white" font-family="Syne, sans-serif" font-size="13" font-weight="700">5 &middot; Critic</text>
+            <text x="250" y="528" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono, monospace" font-size="10">7-point rubric &middot; loop &le;2</text>
+            <!-- Critic -> Writer loop (revise) -->
+            <path d="M175 513 C110 513 110 428 175 428" stroke="#B45309" stroke-width="1.5" fill="none" stroke-dasharray="5 5" opacity="0.5" class="fl"/>
+            <text x="103" y="474" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-family="JetBrains Mono, monospace" font-size="9" transform="rotate(-90 103 474)">revise &middot; &le;2</text>
+            <!-- Critic -> Final PRD -->
+            <line x1="250" y1="536" x2="250" y2="572" stroke="#1A7A4E" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6" class="fl"/>
+            <text x="278" y="558" text-anchor="start" fill="rgba(255,255,255,0.35)" font-family="JetBrains Mono, monospace" font-size="9">pass</text>
+            <!-- Final PRD box -->
+            <rect x="170" y="572" width="160" height="32" rx="6" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+            <text x="250" y="593" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono, monospace" font-size="11">Final PRD</text>
           </svg>
           <div class="diag-label">Multi-Agent Orchestration &mdash; Sequential LangGraph State Machine</div>
         </div>

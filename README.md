@@ -6,11 +6,11 @@ validated, scored, traceable PRD — in minutes, not days.
 - 5 specialized agents (Planner, Researcher, Analyst, PRD Writer, Critic) on a LangGraph state machine
 - Human-in-the-loop checkpoints (synthesis approval, PRD approval) via graph interrupts
 - Sourced RICE opportunity sizing with confidence labels
-- Self-critique loop: 7-point rubric, max 2 revision passes
+- Self-critique loop: 7-point rubric, max 2 critic revisions + 2 synthesis revisions
 - Persistent org memory: SQLite (structured) + vector store (semantic)
 - Prompt-injection scanner over ingested content
 - 10-scenario eval harness with named failure modes
-- Uses Claude 4.5/3.5, Tavily web search, LangSmith traces. Semantic memory embeddings via local sentence-transformers (all-MiniLM-L6-v2, free, offline, no API key).
+- Uses Claude 4.5/3.5, Tavily web search. Semantic memory embeddings via local sentence-transformers (all-MiniLM-L6-v2, free, offline, no API key).
 
 ## Quickstart
 
@@ -41,14 +41,45 @@ python run_evals.py --report evals/report.json
 ## Architecture
 
 ```
-START ─ planner ─┬─ clarify_gate (interrupt) ─ researcher ─┐
-                 └─────────────── analyst ─────────────────┤ (parallel fan-in)
-                                                           ▼
-                          synthesize ─ synthesis_gate (interrupt) ─ (revise ≤2)
-                                                           ▼
-                              writer ─ critic (rubric; loop ≤2) ─ prd_gate (interrupt)
-                                                           ▼
-                                                  finalize (memory write) ─ END
+PM input + raw sources
+         │
+         ▼
+┌────────────────────────┐
+│ 1 · Planner            │  ──► orchestrates & routes
+└────────────────────────┘
+         │
+         ▼
+┌────────────────────────┐
+│ 2 · Researcher         │  ──► web search · ingestion (Tavily, file I/O)
+└────────────────────────┘
+         │
+         ▼
+┌────────────────────────┐
+│ 3 · Analyst            │  ──► RAG · RICE scoring (Chroma, embeddings)
+└────────────────────────┘
+         │
+         ▼
+┌────────────────────────┐
+│ PM approval checkpoint │  ──► HITL: approve synthesis before PRD
+└────────────────────────┘
+         │
+         ▼
+┌────────────────────────┐
+│ 4 · PRD Writer         │  ──► structured template PRD
+└────────────────────────┘
+         │
+         ▼
+┌────────────────────────┐
+│ 5 · Critic             │  ──► 7-point rubric · loop ≤2
+└────────────────────────┘
+         │
+    ┌────┴────┐
+    │ pass    │ revise (≤2)
+    ▼         │
+Final PRD ◄───┘
+         │
+         ▼
+  finalize (memory write: SQLite + Chroma)
 ```
 
 - **Planner** — classifies the request; routes to clarification when the ask is vague
@@ -79,7 +110,7 @@ START ─ planner ─┬─ clarify_gate (interrupt) ─ researcher ─┐
 |-----|---------|
 | `ANTHROPIC_API_KEY` | Claude Sonnet 4.5 (Planner/Researcher/Analyst/Writer), Haiku 4.5 (Critic) |
 | `TAVILY_API_KEY` | web research |
-| `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` | LangSmith traces |
+| `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` | LangChain tracing (optional) |
 | `PP_CRITIC_THRESHOLD` | pass score (default `7.0`) |
 | `PP_MAX_REVISIONS` | critic loop cap (default `2`) |
 
