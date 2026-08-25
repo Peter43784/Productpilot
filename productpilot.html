@@ -207,9 +207,9 @@
     <h1 class="hero-title">The PM&rsquo;s work, done<br>by an <em>agent</em> that thinks.</h1>
     <p class="hero-sub">ProductPilot is a multi-agent system that transforms raw feedback, market data, and company history into a validated, scored, traceable PRD &mdash; in minutes, not days.</p>
     <div class="hero-metrics">
-      <div><div class="metric-value">15<span>&times;</span></div><div class="metric-label">faster time-to-first-draft PRD</div></div>
-      <div><div class="metric-value">6</div><div class="metric-label">agentic building blocks active simultaneously</div></div>
-      <div><div class="metric-value">100<span>%</span></div><div class="metric-label">of decisions traceable to their sources</div></div>
+      <div><div class="metric-value">5</div><div class="metric-label">specialized agents in sequence</div></div>
+      <div><div class="metric-value">3</div><div class="metric-label">HITL checkpoints (clarify, synthesis, PRD)</div></div>
+      <div><div class="metric-value">2</div><div class="metric-label">revision loops (critic + synthesis)</div></div>
       <div><div class="metric-value">0</div><div class="metric-label">existing subscriptions required to run</div></div>
     </div>
     <div class="hero-tags">
@@ -220,7 +220,6 @@
       <span class="tag blue">Persistent Memory</span>
       <span class="tag">LangGraph</span>
       <span class="tag">Claude Sonnet 4.5</span>
-      <span class="tag">LangSmith Traces</span>
       <span class="tag">Track B &middot; Product Consultant</span>
     </div>
   </div>
@@ -293,22 +292,22 @@
           <div class="value-icon">&#128260;</div>
           <div class="value-text"><h4>Multi-source synthesis</h4><p>Ingests Zendesk CSVs, Notion docs, call transcripts, G2 reviews, and NPS exports in one pass. Clusters themes with frequency counts, sentiment, and representative quotes.</p></div>
         </li>
-        <li class="value-item">
-          <div class="value-icon">&#128208;</div>
-          <div class="value-text"><h4>Sourced RICE scoring</h4><p>Opportunity sizing computed from actual ticket cluster sizes and segment share &mdash; not gut feel. Every number traces to a specific source with a stated confidence level.</p></div>
-        </li>
+<li class="value-item">
+            <div class="value-icon">&#128208;</div>
+            <div class="value-text"><h4>Sourced RICE scoring</h4><p>Opportunity sizing computed from theme cluster frequencies with confidence labels &mdash; not gut feel. Every number traces to a source theme with stated confidence.</p></div>
+          </li>
         <li class="value-item">
           <div class="value-icon">&#127963;</div>
           <div class="value-text"><h4>Persistent org memory</h4><p>Every PRD, research synthesis, and competitive scan is written back to a RAG index. Decisions made in Q1 are instantly retrievable with citations in Q3.</p></div>
         </li>
-        <li class="value-item">
-          <div class="value-icon">&#9878;</div>
-          <div class="value-text"><h4>Critic-loop quality gate</h4><p>A Critic agent scores every draft against a 7-point rubric. Below-threshold drafts return to Writer with structured feedback. Max 2 revision passes to cap cost and latency.</p></div>
-        </li>
-        <li class="value-item">
-          <div class="value-icon">&#128300;</div>
-          <div class="value-text"><h4>Full reasoning trace</h4><p>Every PRD ships with a trace bundle: sources consulted, themes extracted, RICE inputs, Critic revision history. The &ldquo;why did we build this?&rdquo; has a real answer.</p></div>
-        </li>
+<li class="value-item">
+            <div class="value-icon">&#9878;</div>
+            <div class="value-text"><h4>Critic-loop quality gate</h4><p>A Critic agent scores every draft against a 7-point rubric. Below-threshold drafts return to Writer with structured feedback. Max 2 critic revisions + 2 synthesis revisions to cap cost and latency.</p></div>
+          </li>
+<li class="value-item">
+            <div class="value-icon">&#128300;</div>
+            <div class="value-text"><h4>Full reasoning trace</h4><p>Every PRD ships with a trace bundle: sources consulted, themes extracted, RICE inputs, Critic/synthesis revision history. The &ldquo;why did we build this?&rdquo; has a real answer.</p></div>
+          </li>
         <li class="value-item">
           <div class="value-icon">&#129489;</div>
           <div class="value-text"><h4>Human-in-the-loop checkpoints</h4><p>PM approves the research synthesis before the PRD is drafted. PM approves the final PRD before commit. Agents augment judgment &mdash; they don&rsquo;t replace it.</p></div>
@@ -321,7 +320,7 @@
         <div class="comp-row"><div class="c-before">Past research buried in Notion</div><div class="c-arrow">&rarr;</div><div class="c-after">Semantic memory searchable with citations</div></div>
         <div class="comp-row"><div class="c-before">&ldquo;Impact: High / Effort: Medium&rdquo;</div><div class="c-arrow">&rarr;</div><div class="c-after">7-point rubric with measurable success metric</div></div>
         <div class="comp-row"><div class="c-before">Static doc, no reasoning visible</div><div class="c-arrow">&rarr;</div><div class="c-after">PRD + trace bundle (sources, scores, revisions)</div></div>
-        <div class="comp-row"><div class="c-before">~20% of decisions auditable</div><div class="c-arrow">&rarr;</div><div class="c-after">100% traceable to sources</div></div>
+        <div class="comp-row"><div class="c-before">~20% of decisions auditable</div><div class="c-arrow">&rarr;</div><div class="c-after">Full trace bundle per PRD (sources, scores, revisions)</div></div>
         <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
           <p class="vv-label">Critic Rubric Dimensions</p>
           <div class="code-blk"><span class="c-comment"># Critic agent evaluates each PRD draft on:</span>
@@ -344,7 +343,7 @@
   <div class="container">
     <p class="sec-eyebrow">Competitive Landscape</p>
     <h2 class="sec-title">The market is full of adjacent tools.<br>None combine all five axes.</h2>
-    <p class="sec-desc">Based on live research: Kraftful and Enterpret verified directly; Productboard Spark verified live — GA since June 22, 2026 ("generally available", per productboard.com blog post by CEO Hubert Palan). ChatPRD known from training data.</p>
+    <p class="sec-desc">Based on live research: Kraftful and Enterpret verified directly; Productboard Spark verified live — claims spec-writing, memory, and roadmap automation. ChatPRD known from training data.</p>
     <div class="ctw">
       <table class="ct">
         <thead>
@@ -366,7 +365,7 @@
           <tr><td class="fn">Reasoning trace / audit log</td><td><span class="crs">&#10007;</span></td><td><span class="crs">&#10007;</span></td><td><span class="crs">&#10007;</span></td><td><span class="crs">&#10007;</span></td><td class="hl"><span class="chk">&#10003;</span></td></tr>
           <tr><td class="fn">Persistent org memory</td><td><span class="crs">&#10007;</span></td><td><span class="crs">&#10007;</span></td><td><span class="crs">&#10007;</span></td><td><span class="prt">walled garden</span></td><td class="hl"><span class="chk">&#10003;</span> open</td></tr>
           <tr><td class="fn">Works without existing subscription</td><td><span class="chk">&#10003;</span></td><td><span class="chk">&#10003;</span></td><td><span class="crs">&#10007;</span></td><td><span class="crs">&#10007;</span></td><td class="hl"><span class="chk">&#10003;</span></td></tr>
-          <tr><td class="fn">Agent-first architecture</td><td><span class="crs">&#10007;</span></td><td><span class="crs">&#10007;</span></td><td><span class="prt">partial</span></td><td><span class="prt">GA Jun 2026</span></td><td class="hl"><span class="chk">&#10003;</span></td></tr>
+          <tr><td class="fn">Agent-first architecture</td><td><span class="crs">&#10007;</span></td><td><span class="crs">&#10007;</span></td><td><span class="prt">partial</span></td><td><span class="prt">AI features</span></td><td class="hl"><span class="chk">&#10003;</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -386,8 +385,8 @@
       <div class="qcard">
         <div class="qt">Productboard data only &middot; PRD + roadmap (walled garden)</div>
         <h4>Legacy PM Platforms + AI</h4>
-        <p>Spark went GA June 2026 as a full rebuild — now claims spec-writing, memory, and roadmap automation. Still bounded by Productboard data. No external source ingestion, no competitive research, no scoring trace.</p>
-        <div class="qtags"><span class="qtag">Productboard Spark (GA)</span><span class="qtag">Aha!</span><span class="qtag">Craft.io</span></div>
+        <p>Spark claims spec-writing, memory, and roadmap automation. Still bounded by Productboard data. No external source ingestion, no competitive research, no scoring trace.</p>
+        <div class="qtags"><span class="qtag">Productboard Spark</span><span class="qtag">Aha!</span><span class="qtag">Craft.io</span></div>
       </div>
       <div class="qcard ours">
         <div class="qt">Open multi-source &middot; PRD + reasoning trace</div>
@@ -468,7 +467,7 @@
             <path d="M175 415 C130 415 130 338 175 338" stroke="#B45309" stroke-width="1.5" fill="none" stroke-dasharray="5 5" opacity="0.45" class="fl"/>
             <text x="110" y="382" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-family="JetBrains Mono, monospace" font-size="9">revise</text>
           </svg>
-          <div class="diag-label">Multi-Agent Orchestration &mdash; LangGraph State Machine</div>
+          <div class="diag-label">Multi-Agent Orchestration &mdash; Sequential LangGraph State Machine</div>
         </div>
       </div>
       <div class="blocks">
@@ -479,7 +478,7 @@
         <div class="block"><div class="bico">&#128260;</div><div><div class="blabel">Self-Reflection / Critic Loop</div><div class="bdesc">Critic evaluates on rubric; Writer revises against structured feedback (max 2 passes)</div></div></div>
         <div class="block"><div class="bico">&#129489;</div><div><div class="blabel">Human-in-the-Loop</div><div class="bdesc">PM approves research synthesis, then approves final PRD before commit</div></div></div>
         <div class="block"><div class="bico">&#129504;</div><div><div class="blabel">Persistent Memory</div><div class="bdesc">SQLite for structured decisions + Chroma for semantic search across all past PRDs</div></div></div>
-        <div class="block"><div class="bico">&#128202;</div><div><div class="blabel">Eval-in-Loop</div><div class="bdesc">Critic rubric scores are the automated eval harness &mdash; traces exported to LangSmith</div></div></div>
+        <div class="block"><div class="bico">&#128202;</div><div><div class="blabel">Eval-in-Loop</div><div class="bdesc">Critic rubric scores are the automated eval harness &mdash; 10 scripted scenarios</div></div></div>
       </div>
     </div>
   </div>
@@ -497,7 +496,6 @@
         <div class="scat">Orchestration</div>
         <div class="si"><div class="sd" style="background:#2348D4;"></div><div class="sn">LangGraph</div><div class="sr">state machine</div></div>
         <div class="si"><div class="sd" style="background:#4A7CF8;"></div><div class="sn">LangChain</div><div class="sr">tooling layer</div></div>
-        <div class="si"><div class="sd" style="background:#1A7A4E;"></div><div class="sn">LangSmith</div><div class="sr">traces + evals</div></div>
         <p class="snote">LangGraph over CrewAI: its state machine is inspectable, human-in-the-loop is first-class, and the graph itself becomes a demo artifact.</p>
       </div>
       <div class="stack-card">
@@ -530,7 +528,7 @@
   <div class="container">
     <p class="sec-eyebrow">Evidence It Works</p>
     <h2 class="sec-title">10 scripted scenarios.<br>Real traces. Named failure modes.</h2>
-    <p class="sec-desc">The eval set is not a demo script. Each scenario has an expected output, a rubric score, and a LangSmith trace. Adversarial cases are run deliberately to show exactly where the system breaks.</p>
+    <p class="sec-desc">The eval set is not a demo script. Each scenario has an expected output, a rubric score, and a trace. Adversarial cases are run deliberately to show exactly where the system breaks.</p>
     <div class="eval-grid">
       <div class="ecard"><span class="etype pos">Standard</span><h4>B2B SaaS onboarding feature</h4><p>PM input: &ldquo;churn is high in month 2.&rdquo; Expected: synthesized themes from 5 sources, 3 RICE-scored options, PRD with measurable activation metric, Critic score &ge;7/10.</p><span class="etag">critic_score &ge; 7.0</span></div>
       <div class="ecard"><span class="etype pos">Standard</span><h4>Consumer mobile feature (push notifications)</h4><p>High-volume feedback scenario. Tests RAG routing &mdash; internal research vs. external app store review data. Expected: correct source attribution in trace.</p><span class="etag">source_attribution = correct</span></div>
