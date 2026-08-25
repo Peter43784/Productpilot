@@ -1,7 +1,6 @@
 """Eval harness: runs the 10 scripted scenarios end-to-end and checks expected tags."""
 from __future__ import annotations
 
-import os
 import sys
 import time
 from pathlib import Path
@@ -10,9 +9,7 @@ from productpilot.graph import run_with_auto_approval
 from .scenarios import build_scenarios
 
 
-def run_evals(mock: bool | None = None, only: int | None = None) -> dict:
-    if mock is not None:
-        os.environ["PRODUCTPILOT_MOCK"] = "1" if mock else "0"
+def run_evals(only: int | None = None) -> dict:
     try:
         from seed_memory import seed as seed_memory
 
@@ -72,9 +69,7 @@ def run_evals(mock: bool | None = None, only: int | None = None) -> dict:
 
 
 def print_report(summary: dict) -> None:
-    from productpilot import config
-
-    print(f"ProductPilot eval harness  (mock={config.MOCK})")
+    print("ProductPilot eval harness")
     print(f"{'ID':<4}{'Category':<12}{'Scenario':<48}{'Expected tag':<38}{'Result':<10}{'s':<7}")
     print("-" * 120)
     for r in summary["results"]:
@@ -96,12 +91,11 @@ def main(argv: list[str] | None = None) -> int:
     _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     parser = argparse.ArgumentParser(description="ProductPilot eval harness")
-    parser.add_argument("--mock", choices=["0", "1"], default=None, help="override PRODUCTPILOT_MOCK")
     parser.add_argument("--only", type=int, default=None, help="run a single scenario by id")
     parser.add_argument("--report", default=None, help="write JSON report to path")
     args = parser.parse_args(argv)
 
-    summary = run_evals(mock=bool(int(args.mock)) if args.mock else None, only=args.only)
+    summary = run_evals(only=args.only)
     print_report(summary)
     if args.report:
         Path(args.report).write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")

@@ -35,17 +35,28 @@ def _poll(thread: str) -> None:
 
 def _resume(resume: dict) -> None:
     """Execute a resume payload then rerun. Only call when _processing is already True."""
+    # Guard against double-execution from Streamlit reruns
+    if st.session_state.get("_resume_done"):
+        return
+    st.session_state["_resume_done"] = True
+    
     thread = st.session_state["thread"]
     out = resume_run(thread, resume)
     snap = {"state": out["state"], "interrupt": out["interrupt"], "finished": out["interrupt"] is None}
     _set_snapshot(snap)
     st.session_state.pop("_processing", None)
     st.session_state.pop("_pending_resume", None)
+    st.session_state.pop("_resume_done", None)
     st.rerun()
 
 
 def _start() -> None:
     """Execute the initial run. Only call when _processing is already True."""
+    # Guard against double-execution from Streamlit reruns
+    if st.session_state.get("_start_done"):
+        return
+    st.session_state["_start_done"] = True
+    
     files = st.session_state.get("selected_sources", [])
     uploads = st.session_state.get("uploaded_files", [])
     paths = [str(DATA / f) for f in files]
@@ -58,6 +69,7 @@ def _start() -> None:
     st.session_state["thread"] = thread
     st.session_state.pop("_processing", None)
     st.session_state.pop("_pending_start", None)
+    st.session_state.pop("_start_done", None)
     _poll(thread)
     st.rerun()
 
@@ -74,7 +86,6 @@ with st.sidebar:
     st.title("ProductPilot")
     st.caption("Track B · Knowledge Agent — Hackathon 2026")
     st.divider()
-    st.write(f"**Mode:** `{'mock (offline)' if config.MOCK else 'live LLM'}`")
     st.write(f"**Memory:** {config.SQLITE_PATH.name} + {vector_store().backend} index")
     st.write(f"**Vector docs:** {vector_store().count()} · **PRDs:** {len(sqlite_store().list_prds(1000))}")
     st.divider()

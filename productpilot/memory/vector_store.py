@@ -4,19 +4,13 @@ Primary backend is Chroma (persistent, in-process). If Chroma is unavailable on 
 platform (e.g. very new Python versions), we transparently fall back to a numpy-based
 index with the same interface — the "0 infrastructure" story stays intact.
 
-Embeddings: pluggable via PP_EMBEDDING_BACKEND (auto|gemini|local|hash). 
-- `local`: Sentence Transformers (free, offline, no API key needed)
-- `gemini`: Google Gemini API (requires GEMINI_API_KEY from Google Cloud)
-- `hash`: Deterministic hash-based embeddings (fastest, no dependencies)
-- `auto`: Uses local if available, then Gemini if key set, otherwise hash
+Embeddings: Sentence Transformers (free, offline, no API key needed).
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
-import os
-import urllib.request
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -25,22 +19,15 @@ from .. import config
 
 log = logging.getLogger("productpilot.vector_store")
 
-EMBED_DIM = 256
-
-_EMBED_PRESETS: dict[str, dict] = {
-    "gemini": {
-        "base_url": "https://generativelanguage.googleapis.com/v1beta/",
-        "key": "GEMINI_API_KEY",
-        "model": "models/text-embedding-004",
-    },
-}
+EMBED_DIM = 384  # all-MiniLM-L6-v2 dimension
 
 
 def _hash_embed(text: str) -> list[float]:
+    """Fallback hash-based embedding when sentence-transformers unavailable."""
     vec = np.zeros(EMBED_DIM, dtype=np.float64)
     for token in text.lower().split():
-        h = int(hashlib.md5(token.encode("utf-8")).hexdigest()[:8], 16)
-        vec[h % EMBED_DIM] += 1.0
+        h = hash(token) % EMBED_DIM
+        vec[h] += 1.0
     norm = np.linalg.norm(vec)
     if norm:
         vec /= norm
@@ -50,88 +37,28 @@ def _hash_embed(text: str) -> list[float]:
 def _local_embed(texts: list[str]) -> list[list[float]]:
     """Sentence Transformers embeddings (free, offline, no API key needed)."""
     try:
-        # Suppress optional dependency warnings from transformers
-        import warnings
         warnings.filterwarnings("ignore", category=UserWarning)
         from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-        embeddings = model.encode(texts, convert_to_tensor=False)
-        return embeddings.tolist() if hasattr(embeddings, 'tolist') else [e.tolist() if hasattr(e, 'tolist') else list(e) for e in embeddings]
-    except ImportError as e:
-        if "torchvision" in str(e) or "torch" in str(e):
-            log.warning("sentence-transformers optional dependencies missing — falling back to hash embeddings. Install with: pip install -r requirements.txt")
-        else:
-            log.warning("sentence-transformers not installed — falling back to hash embeddings. Install with: pip install -r requirements.txt")
+        
+        # Cache model globally to avoid reloading
+        if not hasattr(_local_embed, "_model"):
+            _local_embed._model = SentenceTransformer("all-MiniLM-L6-v2")
+        
+        embeddings = _local_embed._model.encode(texts, convert_to_tensor=False)
+        if hasattr(embeddings, 'tolist'):
+            return embeddings.tolist()
+        return [e.tolist() if hasattr(e, 'tolist') else list(e) for e in embeddings]
+    except ImportError:
+        log.warning("sentence-transformers not installed — falling back to hash embeddings. Install with: pip install sentence-transformers")
         return [_hash_embed(t) for t in texts]
     except Exception as e:
         log.warning("local embedding failed (%s) — falling back to hash embeddings", e)
         return [_hash_embed(t) for t in texts]
 
 
-def _remote_embed(texts: list[str], base_url: str, api_key: str, model: str) -> list[list[float]]:
-    """Gemini embeddings via Google AI Studio API (stdlib only)."""
-    embeddings = []
-    for text in texts:
-        payload = {
-            "model": model,
-            "content": {"parts": [{"text": text}]}
-        }
-        # Google AI Studio endpoint requires API key in query string
-        url = f"{base_url.rstrip('/')}/{model}:embedContent?key={api_key}"
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                body = json.loads(resp.read().decode("utf-8"))
-            embeddings.append(body["embedding"]["values"])
-        except urllib.error.HTTPError as e:
-            error_body = e.read().decode("utf-8") if e.fp else ""
-            log.debug(f"Gemini API error - Status {e.code}: {error_body[:500]}")
-            log.debug(f"URL: {url[:150]}")
-            raise
-        except Exception as e:
-            log.debug(f"Gemini embedding failed for URL: {url[:100]}... Error: {e}")
-            raise
-    return embeddings
-
-
-def _active_backend() -> str:
-    if config.EMBEDDING_BACKEND != "auto":
-        return config.EMBEDDING_BACKEND
-    if config.MOCK:
-        return "hash"
-    # Try local > gemini > hash
-    try:
-        import sentence_transformers
-        return "local"
-    except ImportError:
-        pass
-    except Exception as exc:
-        # Some transformer optional dependency failures bubble up as runtime
-        # exceptions, not ImportError (e.g. mismatched torchvision/torch stack).
-        log.warning("local embedding backend unavailable (%s)", exc)
-    return "gemini" if os.getenv(_EMBED_PRESETS["gemini"]["key"]) else "hash"
-
-
 def embed(texts: list[str]) -> list[list[float]]:
-    backend = _active_backend()
-    if backend == "hash":
-        return [_hash_embed(t) for t in texts]
-    if backend == "local":
-        return _local_embed(texts)
-    preset = _EMBED_PRESETS.get(backend)
-    if preset is None:
-        log.warning("unknown embedding backend %r — falling back to hash embeddings", backend)
-        return [_hash_embed(t) for t in texts]
-    try:
-        return _remote_embed(texts, preset["base_url"], os.getenv(preset["key"]) or "", preset["model"])
-    except Exception as exc:
-        log.warning("embedding backend %s failed (%s) — falling back to hash embeddings", backend, exc)
-        return [_hash_embed(t) for t in texts]
+    """Generate embeddings using local sentence-transformers model."""
+    return _local_embed(texts)
 
 
 class MemoryDoc:

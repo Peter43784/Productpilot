@@ -10,10 +10,7 @@ validated, scored, traceable PRD — in minutes, not days.
 - Persistent org memory: SQLite (structured) + vector store (semantic)
 - Prompt-injection scanner over ingested content
 - 10-scenario eval harness with named failure modes
-- Works with **zero paid subscriptions**: `PRODUCTPILOT_MOCK=1` runs the whole flow offline
-  with deterministic mock models (perfect for demos and CI); real keys unlock Claude 4.5/3.5,
-  Tavily web search, and LangSmith traces. Semantic memory embeddings come free via Google
-  Gemini (`GEMINI_API_KEY`, no credit card) or fall back to deterministic hash embeddings.
+- Uses Claude 4.5/3.5, Tavily web search, LangSmith traces. Semantic memory embeddings via local sentence-transformers (all-MiniLM-L6-v2, free, offline, no API key).
 
 ## Quickstart
 
@@ -21,7 +18,7 @@ validated, scored, traceable PRD — in minutes, not days.
 python -m venv .venv
 .venv\Scripts\activate          # Windows
 pip install -r requirements.txt
-copy .env.example .env         # add keys (optional; mock mode needs none)
+copy .env.example .env         # add ANTHROPIC_API_KEY and TAVILY_API_KEY
 
 # 1. Seed org memory (optional but recommended)
 python seed_memory.py
@@ -37,7 +34,7 @@ python -m productpilot.cli --input "churn is high in month 2" --sources data/sou
 python -m productpilot.cli --input "..." --sources ... --json --fail-below 7.0   # exit 1 if critic < 7
 
 # 3. Eval harness (10 scripted scenarios)
-python run_evals.py             # add --mock 0 to use real models
+python run_evals.py
 python run_evals.py --report evals/report.json
 ```
 
@@ -81,10 +78,8 @@ START ─ planner ─┬─ clarify_gate (interrupt) ─ researcher ─┐
 | Var | Purpose |
 |-----|---------|
 | `ANTHROPIC_API_KEY` | Claude Sonnet 4.5 (Planner/Researcher/Analyst/Writer), Haiku 4.5 (Critic) |
-| `GEMINI_API_KEY` | semantic memory embeddings (`text-embedding-004`, free tier) |
 | `TAVILY_API_KEY` | web research |
 | `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` | LangSmith traces |
-| `PRODUCTPILOT_MOCK` | `1` = offline deterministic run (default `1`) |
 | `PP_CRITIC_THRESHOLD` | pass score (default `7.0`) |
 | `PP_MAX_REVISIONS` | critic loop cap (default `2`) |
 
@@ -94,5 +89,8 @@ START ─ planner ─┬─ clarify_gate (interrupt) ─ researcher ─┐
 - Competitor scans may hallucinate details when web sources are thin — confidence labels stay honest
 - RICE sizing is a PM estimate range, not ground truth
 - Cold start: empty memory produces generic recommendations until seeded (`python seed_memory.py`)
-- Mock mode's web results are canned (deterministic demos); live Tavily results require `TAVILY_API_KEY`
 - Prompt-injection content is detected and redacted before it reaches the model, but the scanner is regex-based — it complements, not replaces, a safety classifier
+
+## Project presentation
+
+- [`productpilot.html`](productpilot.html) — standalone HTML presentation with problem statement, architecture diagram, tech stack, 10 eval scenarios, and known limitations
