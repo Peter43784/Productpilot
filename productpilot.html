@@ -450,6 +450,9 @@
             <!-- Checkpoint banner -->
             <rect x="170" y="340" width="160" height="26" rx="13" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 3"/>
             <text x="250" y="358" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-family="JetBrains Mono, monospace" font-size="10">&#9654; PM approval checkpoint</text>
+            <!-- Checkpoint -> Analyst loop (revise) -->
+            <path d="M170 353 C90 353 90 295 150 295" stroke="#D95F28" stroke-width="1.5" fill="none" stroke-dasharray="5 5" opacity="0.5" class="fl"/>
+            <text x="78" y="324" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-family="JetBrains Mono, monospace" font-size="9" transform="rotate(-90 78 324)">revise &middot; &le;2</text>
             <!-- checkpoint -> Writer -->
             <line x1="250" y1="366" x2="250" y2="402" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6" class="fl"/>
             <!-- 4. PRD Writer node -->
@@ -509,10 +512,10 @@
         <div class="si"><div class="sd" style="background:#B45309;"></div><div class="sn">Claude Haiku 4.5</div><div class="sr">Critic, classifier</div></div>
         <p class="snote">Haiku for Critic keeps cost low (~4&times; cheaper). Sonnet only where deep reasoning is needed. Cost story is ready for judge Q&amp;A.</p>
       </div>
-<div class="stack-card">
-        <div class="scat">Memory & RAG</div>
+      <div class="stack-card">
+        <div class="scat">Memory &amp; RAG</div>
         <div class="si"><div class="sd" style="background:#2348D4;"></div><div class="sn">Chroma</div><div class="sr">vector store</div></div>
-        <div class="si"><div class="sd" style="background:#4A7CF8;"></div><div class="sn">all-MiniLM-L6-v2</div><div class="sr">embeddings (local)</div></div>
+        <div class="si"><div class="sd" style="background:#4A7CF8;"></div><div class="sn">text-embedding-3-small</div><div class="sr">embeddings</div></div>
         <div class="si"><div class="sd" style="background:#6B46C1;"></div><div class="sn">SQLite</div><div class="sr">structured memory</div></div>
         <p class="snote">Chroma runs in-process with no infra; falls back to numpy index if unavailable. Embeddings use Sentence Transformers (384-dim, offline, no API key). SQLite tracks structured decisions (dates, authors, RICE values).</p>
       </div>
